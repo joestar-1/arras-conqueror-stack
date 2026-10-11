@@ -779,7 +779,7 @@ function initCheatScript() {
                     mouse.lockY = mouse.y;
                     mouse.lock = true;
 
-                    const steps = 24;
+                    const steps = 36;
                     events.moveToDir(originDir);
                     events.mouseDown(0, mouse.lockX, mouse.lockY);
                     for (let i = 1; i <= steps; i++) {
@@ -789,17 +789,17 @@ function initCheatScript() {
                             return;
                         }
                         events.moveToDir(originDir + sweepDirection * PI2 * i / steps);
-                        await sleep(0.006);
+                        await sleep(0.016);
                     }
 
                     mouse.lock = false;
-                    await sleep(0.03);
+                    await sleep(0.2);
                     if (!mouse.down && !mouse.buttons[0]) {
                         events.mouseUp(0, mouse.lockX, mouse.lockY);
                         break;
                     }
                     events.mouseUp(0, mouse.lockX, mouse.lockY);
-                    await sleep(0.02);
+                    await sleep(0.08);
                     sweepDirection *= -1;
                 }
             } else if (tv == "blockade") {
