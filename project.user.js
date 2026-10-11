@@ -3044,37 +3044,52 @@ Follow distance:
             });
             document.body.appendChild(menuToggleBtn);
 
-            const JOYSTICK_R = 55;
-            const KNOB_R = 25;
-            const DEAD_ZONE = 35;
+            const JOYSTICK_R = 58;
+            const KNOB_R = 26;
+            const DEAD_ZONE = 24;
             const JS_SIZE = (JOYSTICK_R + KNOB_R) * 2;
 
             const wasdPad = document.createElement("div");
             wasdPad.id = "wasdPad";
             Object.assign(wasdPad.style, {
                 position: "fixed",
-                bottom: "80px",
-                left: "120px",
+                bottom: "75px",
+                left: "110px",
                 width: JS_SIZE + "px",
                 height: JS_SIZE + "px",
                 zIndex: "9999998",
                 userSelect: "none",
                 touchAction: "none",
-                opacity: "0.6"
+                opacity: "0.85",
+                transition: "opacity 0.25s cubic-bezier(0.16, 1, 0.3, 1)"
             });
 
+            // Modern glowing glass base with directional arrows
             const jsBase = document.createElement("div");
             Object.assign(jsBase.style, {
                 position: "absolute",
                 width: JS_SIZE + "px",
                 height: JS_SIZE + "px",
                 borderRadius: "50%",
-                background: "rgba(12,12,20,0.55)",
-                border: "2px solid rgba(255,255,255,0.2)",
-                backdropFilter: "blur(6px)",
-                boxSizing: "border-box"
+                background: "radial-gradient(circle, rgba(15, 23, 42, 0.6) 0%, rgba(8, 14, 28, 0.88) 100%)",
+                border: "2px solid rgba(56, 189, 248, 0.3)",
+                backdropFilter: "blur(12px)",
+                WebkitBackdropFilter: "blur(12px)",
+                boxShadow: "0 10px 30px rgba(0, 0, 0, 0.6), inset 0 0 20px rgba(56, 189, 248, 0.1), 0 0 15px rgba(56, 189, 248, 0.15)",
+                boxSizing: "border-box",
+                overflow: "hidden"
             });
 
+            // Directional indicators (WASD subtle ticks)
+            jsBase.innerHTML = `
+                <div style="position:absolute;top:8px;left:50%;transform:translateX(-50%);width:12px;height:3px;background:rgba(56,189,248,0.5);border-radius:2px;box-shadow:0 0 6px #38bdf8;"></div>
+                <div style="position:absolute;bottom:8px;left:50%;transform:translateX(-50%);width:12px;height:3px;background:rgba(56,189,248,0.5);border-radius:2px;box-shadow:0 0 6px #38bdf8;"></div>
+                <div style="position:absolute;left:8px;top:50%;transform:translateY(-50%);height:12px;width:3px;background:rgba(56,189,248,0.5);border-radius:2px;box-shadow:0 0 6px #38bdf8;"></div>
+                <div style="position:absolute;right:8px;top:50%;transform:translateY(-50%);height:12px;width:3px;background:rgba(56,189,248,0.5);border-radius:2px;box-shadow:0 0 6px #38bdf8;"></div>
+                <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:28px;height:28px;border-radius:50%;border:1px dashed rgba(56,189,248,0.25);"></div>
+            `;
+
+            // Modern Knob with gradient & glow center
             const jsKnob = document.createElement("div");
             const kSize = KNOB_R * 2;
             Object.assign(jsKnob.style, {
@@ -3082,14 +3097,18 @@ Follow distance:
                 width: kSize + "px",
                 height: kSize + "px",
                 borderRadius: "50%",
-                background: "rgba(59,130,246,0.75)",
-                border: "2px solid rgba(255,255,255,0.4)",
-                boxShadow: "0 4px 16px rgba(0,0,0,0.5)",
+                background: "radial-gradient(circle at 35% 35%, #38bdf8 0%, #0284c7 65%, #0369a1 100%)",
+                border: "2px solid rgba(255, 255, 255, 0.8)",
+                boxShadow: "0 6px 20px rgba(0, 0, 0, 0.6), 0 0 16px rgba(56, 189, 248, 0.75), inset 0 2px 4px rgba(255, 255, 255, 0.4)",
                 left: (JS_SIZE / 2 - KNOB_R) + "px",
                 top: (JS_SIZE / 2 - KNOB_R) + "px",
-                transition: "left 0.05s, top 0.05s",
-                boxSizing: "border-box"
+                transition: "left 0.05s, top 0.05s, transform 0.15s ease",
+                boxSizing: "border-box",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center"
             });
+            jsKnob.innerHTML = `<div style="width:12px;height:12px;border-radius:50%;background:rgba(255,255,255,0.9);box-shadow:0 0 10px #ffffff;"></div>`;
 
             wasdPad.appendChild(jsBase);
             wasdPad.appendChild(jsKnob);
@@ -3101,10 +3120,17 @@ Follow distance:
 
             function jsSetKeys(dx, dy) {
                 const newKeys = new Set();
-                if (dx >  DEAD_ZONE) newKeys.add("KeyD");
-                if (dx < -DEAD_ZONE) newKeys.add("KeyA");
-                if (dy >  DEAD_ZONE) newKeys.add("KeyS");
-                if (dy < -DEAD_ZONE) newKeys.add("KeyW");
+                const angle = Math.atan2(dy, dx);
+                const dist = Math.hypot(dx, dy);
+
+                if (dist > DEAD_ZONE) {
+                    // Smooth 8-direction detection with 22.5 deg overlap
+                    if (dy < -DEAD_ZONE * 0.7) newKeys.add("KeyW");
+                    if (dy >  DEAD_ZONE * 0.7) newKeys.add("KeyS");
+                    if (dx < -DEAD_ZONE * 0.7) newKeys.add("KeyA");
+                    if (dx >  DEAD_ZONE * 0.7) newKeys.add("KeyD");
+                }
+
                 jsActiveKeys.forEach(k => { if (!newKeys.has(k)) { events.keyUp(k); } });
                 newKeys.forEach(k => { if (!jsActiveKeys.has(k)) { events.keyDown(k); } });
                 jsActiveKeys = newKeys;
@@ -3117,12 +3143,16 @@ Follow distance:
                 jsKnob.style.transition = "none";
                 jsKnob.style.left = (JS_SIZE / 2 - KNOB_R + Math.cos(angle) * clamped) + "px";
                 jsKnob.style.top  = (JS_SIZE / 2 - KNOB_R + Math.sin(angle) * clamped) + "px";
+                jsKnob.style.transform = "scale(1.12)";
+                wasdPad.style.opacity = "1";
             }
 
             function jsReset() {
-                jsKnob.style.transition = "left 0.1s, top 0.1s";
+                jsKnob.style.transition = "left 0.15s cubic-bezier(0.16, 1, 0.3, 1), top 0.15s cubic-bezier(0.16, 1, 0.3, 1), transform 0.15s ease";
                 jsKnob.style.left = (JS_SIZE / 2 - KNOB_R) + "px";
                 jsKnob.style.top  = (JS_SIZE / 2 - KNOB_R) + "px";
+                jsKnob.style.transform = "scale(1)";
+                wasdPad.style.opacity = "0.85";
                 jsActiveKeys.forEach(k => { events.keyUp(k); });
                 jsActiveKeys = new Set();
                 jsTouchId = null;
@@ -3378,24 +3408,33 @@ Follow distance:
             });
 
             cursor = document.createElement("div");
+            cursor.id = "prCustomCursor";
             Object.assign(cursor.style, {
                 position: "fixed",
-                width: "32px",
-                height: "32px",
+                width: "40px",
+                height: "40px",
                 pointerEvents: "none",
                 zIndex: "99999999",
                 left: (innerWidth / 2) + "px",
                 top: (innerHeight / 2) + "px",
-                transform: "translate(-16px, -16px)"
+                transform: "translate(-20px, -20px)",
+                transition: "transform 0.05s ease-out",
+                filter: "drop-shadow(0 0 6px rgba(56, 189, 248, 0.75))"
             });
-            cursor.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32">
-                <line x1="16" y1="0" x2="16" y2="32" stroke="black" stroke-width="2.5"/>
-                <line x1="0" y1="16" x2="32" y2="16" stroke="black" stroke-width="2.5"/>
-                <line x1="16" y1="0" x2="16" y2="32" stroke="white" stroke-width="1"/>
-                <line x1="0" y1="16" x2="32" y2="16" stroke="white" stroke-width="1"/>
-                <circle cx="16" cy="16" r="3" fill="none" stroke="black" stroke-width="2"/>
-                <circle cx="16" cy="16" r="3" fill="none" stroke="white" stroke-width="1"/>
-            </svg>`;
+            cursor.innerHTML = `
+                <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 40 40">
+                    <!-- Outer glowing ring ticks -->
+                    <circle cx="20" cy="20" r="14" fill="none" stroke="rgba(56, 189, 248, 0.45)" stroke-width="1.2" stroke-dasharray="3 3"/>
+                    <!-- Target Crosshairs -->
+                    <line x1="20" y1="2" x2="20" y2="10" stroke="#38bdf8" stroke-width="2.2" stroke-linecap="round"/>
+                    <line x1="20" y1="30" x2="20" y2="38" stroke="#38bdf8" stroke-width="2.2" stroke-linecap="round"/>
+                    <line x1="2" y1="20" x2="10" y2="20" stroke="#38bdf8" stroke-width="2.2" stroke-linecap="round"/>
+                    <line x1="30" y1="20" x2="38" y2="20" stroke="#38bdf8" stroke-width="2.2" stroke-linecap="round"/>
+                    <!-- Center reticle point with white core -->
+                    <circle cx="20" cy="20" r="4.5" fill="none" stroke="#38bdf8" stroke-width="1.8"/>
+                    <circle cx="20" cy="20" r="2" fill="#ffffff"/>
+                </svg>
+            `;
             document.body.appendChild(cursor);
 
             kbOverlay = null;
