@@ -12,135 +12,7 @@
 // @require      https://cdnjs.cloudflare.com/ajax/libs/msgpack-lite/0.1.26/msgpack.min.js
 // ==/UserScript==
 
-const ENC_OWNER_KEY = "cHItb3duZXIxMjM0";
-const ENC_MEMBER_KEY = "cHItbWVtYmVyLTEyMzQ=";
-
 if (window.name === '__pr_is_bot') window.__is_bot = true;
-
-function decodeKey(encoded) {
-    try { return atob(encoded); } catch(e) { return null; }
-}
-
-const OWNER_KEY = decodeKey(ENC_OWNER_KEY);
-const MEMBER_KEY = decodeKey(ENC_MEMBER_KEY);
-
-let authRole = null;
-
-function checkAuth() {
-    const stored = localStorage.getItem('arras_auth_role');
-    if (stored === 'owner' || stored === 'member') {
-        authRole = stored;
-        return true;
-    }
-    return false;
-}
-
-function setAuth(role) {
-    authRole = role;
-    localStorage.setItem('arras_auth_role', role);
-}
-
-function clearAuth() {
-    authRole = null;
-    localStorage.removeItem('arras_auth_role');
-}
-
-function showAuthModal() {
-    const existing = document.getElementById('authModal');
-    if (existing) existing.remove();
-
-    const modal = document.createElement('div');
-    modal.id = 'authModal';
-    Object.assign(modal.style, {
-        position: 'fixed',
-        top: '0', left: '0', width: '100%', height: '100%',
-        background: 'rgba(0,0,0,0.85)',
-        backdropFilter: 'blur(8px)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        zIndex: '1000000',
-        fontFamily: 'system-ui, -apple-system, "Segoe UI", Ubuntu, sans-serif'
-    });
-
-    const card = document.createElement('div');
-    Object.assign(card.style, {
-        background: 'rgba(12, 20, 36, 0.96)',
-        backdropFilter: 'blur(16px)',
-        borderRadius: '32px',
-        padding: '32px 40px',
-        width: '360px',
-        maxWidth: '90%',
-        textAlign: 'center',
-        boxShadow: '0 25px 45px -12px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.12)',
-        color: '#ffffff',
-        transition: 'transform 0.2s ease'
-    });
-
-    card.innerHTML = `
-        <div style="font-size: 48px; margin-bottom: 12px;"></div>
-        <h2 style="margin: 0 0 8px 0; font-weight: 600; font-size: 24px; letter-spacing: -0.3px;">Authorization Required</h2>
-        <p style="margin: 0 0 28px 0; opacity: 0.7; font-size: 14px;">Enter your key to use this script</p>
-        <input type="password" id="authKeyInput" placeholder="Key" style="
-            width: 100%;
-            padding: 14px 16px;
-            border-radius: 60px;
-            border: 1px solid rgba(255,255,255,0.2);
-            background: rgba(0,0,0,0.4);
-            color: white;
-            font-size: 15px;
-            text-align: center;
-            outline: none;
-            box-sizing: border-box;
-            margin-bottom: 20px;
-            transition: 0.2s;
-        " autocomplete="off">
-        <button id="authSubmitBtn" style="
-            background: #3b82f6;
-            border: none;
-            padding: 12px 20px;
-            border-radius: 60px;
-            color: white;
-            font-weight: 600;
-            font-size: 15px;
-            cursor: pointer;
-            width: 100%;
-            transition: 0.2s;
-            box-shadow: 0 2px 8px rgba(59,130,246,0.3);
-        ">Verify Access</button>
-        <p id="authError" style="color: #f87171; font-size: 13px; margin-top: 20px; min-height: 40px; font-weight: 500;"></p>
-    `;
-
-    modal.appendChild(card);
-    (document.body || document.documentElement).appendChild(modal);
-
-    const input = document.getElementById('authKeyInput');
-    const submitBtn = document.getElementById('authSubmitBtn');
-    const errorSpan = document.getElementById('authError');
-
-    function verify() {
-        const key = input.value.trim();
-        if (key === OWNER_KEY) {
-            setAuth('owner');
-            modal.remove();
-            initCheatScript();
-        } else if (key === MEMBER_KEY) {
-            setAuth('member');
-            modal.remove();
-            initCheatScript();
-        } else {
-            errorSpan.innerText = 'Invalid key. Access denied.';
-            input.value = '';
-            input.focus();
-            input.style.borderColor = '#f87171';
-            setTimeout(() => { input.style.borderColor = 'rgba(255,255,255,0.2)'; }, 1000);
-        }
-    }
-
-    submitBtn.onclick = verify;
-    input.onkeypress = (e) => { if (e.key === 'Enter') verify(); };
-    input.focus();
-}
 
 function initCheatScript() {
     if (location.hostname == "localhost" && location.port != "42789")
@@ -907,7 +779,7 @@ function initCheatScript() {
                     mouse.lockY = mouse.y;
                     mouse.lock = true;
 
-                    const steps = 36;
+                    const steps = 24;
                     events.moveToDir(originDir);
                     events.mouseDown(0, mouse.lockX, mouse.lockY);
                     for (let i = 1; i <= steps; i++) {
@@ -917,17 +789,17 @@ function initCheatScript() {
                             return;
                         }
                         events.moveToDir(originDir + sweepDirection * PI2 * i / steps);
-                        await sleep(0.016);
+                        await sleep(0.006);
                     }
 
                     mouse.lock = false;
-                    await sleep(0.2);
+                    await sleep(0.03);
                     if (!mouse.down && !mouse.buttons[0]) {
                         events.mouseUp(0, mouse.lockX, mouse.lockY);
                         break;
                     }
                     events.mouseUp(0, mouse.lockX, mouse.lockY);
-                    await sleep(0.08);
+                    await sleep(0.02);
                     sweepDirection *= -1;
                 }
             } else if (tv == "blockade") {
@@ -2952,7 +2824,6 @@ function initCheatScript() {
                 </div>
                 <div id="menu-other" style="display:none">
                     <button id="pibuild">Do PI build</button>
-                    <button id="resetAuthBtn" style="background:#dc2626;">Reset Authorization</button>
                     Detected FOV: <span id="fovDisplay" style="font-weight:bold;color:#60a5fa;">--</span></p>
                     <h4 style="margin:6px 0 3px"> Leaked clan tags</h4>
                     <textarea id="stealedClans" style="width:100%;height:60px;">Nothing for now</textarea>
@@ -3081,7 +2952,7 @@ Follow distance:
                     PI build → enable secret options in arras settings.
                 </div>
             </div>
-            <div id="authBadge">${authRole === 'owner' ? 'Owner' : 'PR Member'}</div>`;
+            <div id="authBadge">Public Script</div>`;
 
             document.body.appendChild(menu);
 
@@ -4292,11 +4163,6 @@ Follow distance:
                 upgradeStats(tank);
             });
 
-            getEl("resetAuthBtn").addEventListener("click", () => {
-                clearAuth();
-                alert("Authorization cleared. Please refresh the page to re-enter key.");
-                location.reload();
-            });
 
             const _prRespawnSel = getEl("pr_respawn_build_sel");
             const _prRespawnBtn = getEl("pr_force_respawn_btn");
@@ -5978,12 +5844,8 @@ document.getElementById('extChatStop')?.addEventListener('click', () => {
     });
 }
 
-if (checkAuth()) {
-    initCheatScript();
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initCheatScript, { once: true });
 } else {
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', showAuthModal);
-    } else {
-        showAuthModal();
-    }
+    initCheatScript();
 }
